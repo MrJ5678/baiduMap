@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script
+      type="text/javascript"
+      src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=Uq8logkcr0StuaRygCWGtXf3nYpSFhVH"
+    ></script>
+    <script src="https://mapv.baidu.com/gl/examples/static/common.js"></script>
+    <script src="https://mapv.baidu.com/build/mapv.min.js"></script>
+    <script src="https://unpkg.com/mapvgl/dist/mapvgl.min.js"></script>
+    <script src="https://unpkg.com/mapvgl/dist/mapvgl.threelayers.min.js"></script>
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+      }
+      #map_container {
+        width: 100%;
+        height: 100%;
+      }
+      .anchorBL,
+      .BMap_cpyCtrl {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map_container"></div>
+    <script>
+      var cities = [
+        "北京市",
+        "石家庄市",
+        "太原市",
+        "呼和浩特市",
+        "沈阳市",
+        "长春市",
+        "哈尔滨市",
+        "南京市",
+        "杭州市",
+        "合肥市",
+        "福州市",
+        "济南市",
+        "南昌市",
+        "郑州市",
+        "乌鲁木齐市",
+        "武汉市",
+        "长沙市",
+        "广州市",
+      ]
+      const initBMap = () => {
+        let cityCenter = mapv.utilCityCenter.getCenterByCityName("北京")
+        let map = initMap({
+          tilt: 0,
+          center: [cityCenter.lng, cityCenter.lat],
+          zoom: 5,
+          style: purpleStyle,
+        })
+
+        return map
+      }
+
+      // 准备数据
+      const initData = () => {
+        var data = []
+        var randomCount = 500
+        var targetCity = mapv.utilCityCenter.getCenterByCityName("北京")
+
+        var nodeData = [
+          {
+            x: targetCity.lng,
+            y: targetCity.lat,
+          },
+        ]
+        var edgeData = []
+        var curve = new mapvgl.BezierCurve()
+
+        for (let i = 0; i < randomCount; i++) {
+          var startCity = mapv.utilCityCenter.getCenterByCityName(
+            cities[parseInt(Math.random() * cities.length)]
+          )
+          nodeData.push({
+            x: startCity.lng - 5 + Math.random() * 10,
+            y: startCity.lat - 5 + Math.random() * 10,
+          })
+          edgeData.push({
+            source: i + 1,
+            target: 0,
+          })
+        }
+
+        // console.log(data)
+        let bundling = mapv
+          .utilForceEdgeBundling()
+          .nodes(nodeData)
+          .edges(edgeData)
+        let results = bundling()
+        console.log(results)
+        for (let index = 0; index < results.length; index++) {
+          let line = results[index]
+          let coordinates = []
+          for (let index2 = 0; index2 < line.length; index2++) {
+            coordinates.push([line[index2].x, line[index2].y])
+          }
+          data.push({
+            geometry: {
+              type: "LineString",
+              coordinates,
+            },
+          })
+        }
+        return data
+      }
+
+      // 绘制数据
+      const setData = (map, data) => {
+        // 初始化图层
+        var view = new mapvgl.View({ map })
+        // 初始化 线 对象
+        var lineLayer = new mapvgl.LineLayer({
+          color: "rgba(55, 50, 250, 0.3)",
+          blend: "lighter",
+        })
+
+        view.addLayer(lineLayer)
+        lineLayer.setData(data)
+        // 初始化 飞线 对象
+
+        // 将 飞线对象 添加到 图层中
+        // view.addLayer(flyLine)
+        // 绑定 飞线对象 和 数据源 绑定
+        // flyLine.setData(data)
+        var linePointLayer = new mapvgl.LinePointLayer({
+          size: 8,
+          speed: 12,
+          color: "rgba(255, 255, 0, 0.6)",
+          animationType: mapvgl.LinePointLayer.ANIMATION_TYPE_SMOOTH,
+          shapeType: mapvgl.LinePointLayer.SHAPE_TYPE_CIRCLE,
+          // blend: "lighter",
+        })
+        view.addLayer(linePointLayer)
+        linePointLayer.setData(data)
+      }
+
+      let map = initBMap()
+
+      let data = initData()
+
+      setData(map, data)
+    </script>
+  </body>
+</html>
